@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Idle RTS Game</title>
+  <style>
+    #gameCanvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <h1>Idle RTS Game</h1>
+  <p id="player-info"></p>
+  <button id="create-player">Create Player</button>
+  <button id="place-town-center">Place Town Center</button>
+  <canvas id="gameCanvas" width="1000" height="1000"></canvas>
+
+  <script>
+    let playerId;
+    let playerData;
+
+    document.getElementById('create-player').addEventListener('click', () => {
+      fetch('/api/player/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Player1' })
+      })
+      .then(response => response.json())
+      .then(data => {
+        playerId = data.playerId;
+        playerData = data.playerData;
+        document.getElementById('player-info').innerText = 
+          `Player ID: ${playerId}, Wood: ${playerData.wood}, Stone: ${playerData.stone}`;
+        drawVillagers(playerData.villagers);
+      });
+    });
+
+    document.getElementById('place-town-center').addEventListener('click', () => {
+      const position = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
+      fetch('/api/player/place-town-center', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId, position })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Town Center placed at:', data.townCenter);
+          drawTownCenter(data.townCenter);
+        } else {
+          alert(data.message);
+        }
+      });
+    });
+
+    function drawVillagers(villagers) {
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const villagerImg = new Image();
+      villagerImg.src = '/images/villager1.jpg'; // Ensure the path is correct
+
+      villagerImg.onload = () => {
+        villagers.forEach(villager => {
+          ctx.drawImage(villagerImg, villager.x, villager.y, 50, 50); // Adjust size as needed
+        });
+      };
+    }
+
+    function drawTownCenter(position) {
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const tcImg = new Image();
+      tcImg.src = '/images/towncenter.jpg'; // Ensure the path is correct
+
+      tcImg.onload = () => {
+        ctx.drawImage(tcImg, position.x, position.y, 100, 100); // Adjust size as needed
+      };
+    }
+  </script>
+</body>
+</html>
